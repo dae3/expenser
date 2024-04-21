@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"time"
-	"crypto/rand"
 
 	"github.com/coreos/go-oidc"
 )
@@ -15,6 +16,8 @@ import (
 var (
 	oidcProvider *oidc.Provider
 	verifier     *oidc.IDTokenVerifier
+	state        []byte
+	nonce        []byte
 )
 
 func initOIDC() {
@@ -27,11 +30,18 @@ func initOIDC() {
 		ClientID: os.Getenv("OIDC_CLIENT_ID"),
 	}
 	verifier = oidcProvider.Verifier(oidcConfig)
+
+	state, err := generateRandomBytes()
+	if err != nil {
+		log.Fatalf("Unable to generate random state: %s", err)
+	}
+	nonce, err := generateRandomBytes()
+	if err != nil {
+		log.Fatalf("Unable to generate random nonce: %v", err)
+	}
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	state := "example-state" // This should be a random or session-specific value in production
-	nonce := "example-nonce" // This should also be a random or session-specific value
 	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid%%20email&redirect_uri=http://localhost:8080/callback&state=%s&nonce=%s&response_mode=form_post", oidcProvider.Endpoint().AuthURL, os.Getenv("OIDC_CLIENT_ID"), state, nonce)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
