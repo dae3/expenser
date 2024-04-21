@@ -28,9 +28,20 @@ func initOIDC() {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	state := "example-state" // This should be a random or session-specific value in production
-	nonce := "example-nonce" // This should also be a random or session-specific value
-	http.Redirect(w, r, oidcProvider.Endpoint().AuthURL+"?client_id="+os.Getenv("OIDC_CLIENT_ID")+"&response_type=id_token&scope=openid email&redirect_uri=http://localhost:8080/callback&state="+state+"&nonce="+nonce, http.StatusFound)
+	state, err := generateRandomString(32)
+	if err != nil {
+		http.Error(w, "Failed to generate state", http.StatusInternalServerError)
+		return
+	}
+	nonce, err := generateRandomString(32)
+	if err != nil {
+		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
+		return
+	}
+	// Store state and nonce in session or secure storage for later validation
+	storeStateAndNonce(state, nonce)
+	authURL := oidcProvider.Endpoint().AuthURL + "?client_id=" + os.Getenv("OIDC_CLIENT_ID") + "&response_type=id_token&scope=openid email&redirect_uri=http://localhost:8080/callback&state=" + state + "&nonce=" + nonce
+	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
