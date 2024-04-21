@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"log"
@@ -26,6 +27,9 @@ type receivedData struct {
 	Description string
 	Amount      float64
 }
+
+// go:embed
+var templates embed.FS
 
 func truncatedFormStringValue(r *http.Request, fieldName string) (error, string) {
 	val := r.Form[fieldName]
