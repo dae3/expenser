@@ -1,1 +1,4 @@
-src/tmp
+tmp/
+.devcontainer.json
+credentials.json
+key.json
