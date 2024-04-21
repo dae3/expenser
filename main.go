@@ -12,7 +12,6 @@ import (
 
 	"github.com/coreos/go-oidc"
 
-
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -48,10 +47,9 @@ func main() {
 		log.Fatalf("Failed to get OIDC provider: %v", err)
 	}
 	oidcConfig := &oidc.Config{
-		ClientID: "your-client-id", // Replace with your client ID
+		ClientID: os.Getenv("OIDC_CLIENT_ID"),
 	}
 	verifier := oidcProvider.Verifier(oidcConfig)
-
 
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
