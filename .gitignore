@@ -22,8 +22,8 @@ go.work
 
 # credentials
 key.json
-src/credentials.json
+credentials.json
 
 
 # air scratch
-src/tmp/
+tmp/
