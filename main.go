@@ -52,12 +52,20 @@ func main() {
 			http.Error(w, "No ID token found", http.StatusUnauthorized)
 			return
 		}
-		idToken, err := verifier.Verify(context.Background(), rawIDToken.Value)
+		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
 		if err != nil {
 			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
 			return
 		}
-		_ = idToken // Use idToken for further user information if needed
+		var claims struct {
+		Email string `json:"email"`
+	}
+	if err := idToken.Claims(&claims); err != nil {
+		http.Error(w, "Failed to parse ID token claims", http.StatusInternalServerError)
+		return
+	}
+	email := claims.Email
+
 
 		if err := pages.Execute(w, nil); err != nil {
 			w.WriteHeader(500)
