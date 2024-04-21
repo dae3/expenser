@@ -52,6 +52,7 @@ func main() {
 	verifier := oidcProvider.Verifier(oidcConfig)
 
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
+
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		state := "example-state" // This should be a random or session-specific value in production
 		nonce := "example-nonce" // This should also be a random or session-specific value
