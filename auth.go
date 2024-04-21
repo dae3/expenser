@@ -31,7 +31,7 @@ func initOIDC() {
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	state := "example-state" // This should be a random or session-specific value in production
 	nonce := "example-nonce" // This should also be a random or session-specific value
-	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid email&redirect_uri=http://localhost:8080/callback&state=%s&nonce=%s&response_mode=query", oidcProvider.Endpoint().AuthURL, os.Getenv("OIDC_CLIENT_ID"), state, nonce)
+	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid%20email&redirect_uri=http://localhost:8080/callback&state=%s&nonce=%s&response_mode=query", oidcProvider.Endpoint().AuthURL, os.Getenv("OIDC_CLIENT_ID"), state, nonce)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
