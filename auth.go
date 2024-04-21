@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"crypto/rand"
 
 	"github.com/coreos/go-oidc"
 )
@@ -57,4 +58,12 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		Path:    "/",
 	})
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+func generateRandomBytes() ([]byte, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
