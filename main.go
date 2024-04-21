@@ -74,9 +74,13 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "errc: %v\nerrd: %v\nerra: %v\nn: %d\nerr: %v", errc, errd, erra, n, err)
 		} else {
-			if err := appendExpense(d, r.Context()); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, "%v", err)
+			if os.Getenv("NO_SHEETS_API") == "" {
+				if err := appendExpense(d, r.Context()); err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					fmt.Fprintf(w, "%v", err)
+				} else {
+					pages.ExecuteTemplate(w, "submit.html", d)
+				}
 			} else {
 				pages.ExecuteTemplate(w, "submit.html", d)
 			}
