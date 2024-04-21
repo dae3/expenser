@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html>
-  <head><title>go on, spend!</title>
-    <link rel="stylesheet" href="/css/skeleton.css" />
-    <body>
-      <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
-      <h1>enter thy expenditure of coin</h1>
+  <head>
+    <title>go on, spend!</title>
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/skeleton.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+    <div class="container">
       <form>
         <div class="row">
           <label for="category">Category</label>
@@ -25,5 +30,6 @@
           <input class="button-primary" type="button" value="Submit" hx-post="/submit" hx-target="closest body">
         </div>
       </form>
-    </body>
+    </div>
+  </body>
 </html>
