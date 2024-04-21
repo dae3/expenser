@@ -10,6 +10,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/coreos/go-oidc"
+
+
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -40,6 +43,11 @@ func truncatedFormStringValue(r *http.Request, fieldName string) (error, string)
 }
 
 func main() {
+	oidcProvider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
+	if err != nil {
+		log.Fatalf("Failed to get OIDC provider: %v", err)
+	}
+
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		if err := pages.Execute(w, nil); err != nil {
