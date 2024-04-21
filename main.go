@@ -48,8 +48,8 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		rawIDToken, err := r.Cookie("id_token")
-		if err != nil {
-			http.Error(w, "No ID token found", http.StatusUnauthorized)
+		if err != nil || rawIDToken.Value == "" {
+			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
