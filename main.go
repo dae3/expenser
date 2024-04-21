@@ -41,7 +41,7 @@ func truncatedFormStringValue(r *http.Request, fieldName string) (error, string)
 
 func main() {
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
-	http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		if err := pages.Execute(w, nil); err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error rendering page template: %v", err)
