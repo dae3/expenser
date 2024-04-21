@@ -1,5 +1,0 @@
-# Google App Engine configuration
-runtime: go122
-
-env_variables:
-  SHEET_ID: 1rqHcDe8hn7v5aah7mL8BVXBi7B02GXvvlSParWFXud4
