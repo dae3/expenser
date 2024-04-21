@@ -10,9 +10,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/coreos/go-oidc"
-
-
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
