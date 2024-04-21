@@ -15,6 +15,6 @@ jobs:
       uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         service: expenser
-        source: $GITHUB_WORKSPACE
+        source: "$GITHUB_WORKSPACE"
         region: australia-southeast1
         suffix: '${{ github.sha }}'
