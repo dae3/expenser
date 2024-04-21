@@ -1,11 +1,10 @@
-/* https://issuetracker.google.com/issues/265528492?pli=1 means manual gcloud installation... */
-
 {
   "image": "mcr.microsoft.com/vscode/devcontainers/base:debian",
   "features": {
     "ghcr.io/devcontainers/features/go:1": {},
     "ghcr.io/guiyomh/features/vim:0": {},
-    "ghcr.io/rio/features/chezmoi:1": {}
+    "ghcr.io/rio/features/chezmoi:1": {},
+    "ghcr.io/dhoeric/features/google-cloud-cli:1": {}
   },
   "remoteEnv": {
     "LANG": "en_AU.UTF-8",
@@ -16,9 +15,10 @@
     "package-update": "sudo apt update -y",
     "packages" :"sudo apt-get install -y zsh httpie",
     "shell": "sudo chsh -s $(which zsh) vscode",
-    "air": "go install github.com/cosmtrek/air@latest",
-    "gcloud": "curl -sfL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-472.0.0-linux-x86_64.tar.gz | sudo tar -C /usr/local -zxf -",
-    "gcloud-gae": "sudo gcloud components install app-engine-go"
+    "air": "go install github.com/cosmtrek/air@latest"
+  },
+  "postStartCommand": {
+    "shell": "sudo chsh -s $(which zsh) vscode"
   },
   "forwardPorts": "8080"
 }
