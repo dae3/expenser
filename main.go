@@ -52,6 +52,12 @@ func main() {
 	verifier := oidcProvider.Verifier(oidcConfig)
 
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		state := "example-state" // This should be a random or session-specific value in production
+		nonce := "example-nonce" // This should also be a random or session-specific value
+		http.Redirect(w, r, oidcProvider.Endpoint().AuthURL+"?client_id="+os.Getenv("OIDC_CLIENT_ID")+"&response_type=id_token&scope=openid email&redirect_uri=http://localhost:8080/callback&state="+state+"&nonce="+nonce, http.StatusFound)
+	})
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		rawIDToken, err := r.Cookie("id_token")
 		if err != nil {
