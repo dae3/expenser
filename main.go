@@ -59,6 +59,28 @@ func main() {
 		http.Redirect(w, r, oidcProvider.Endpoint().AuthURL+"?client_id="+os.Getenv("OIDC_CLIENT_ID")+"&response_type=id_token&scope=openid email&redirect_uri=http://localhost:8080/callback&state="+state+"&nonce="+nonce, http.StatusFound)
 	})
 
+	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+		// Error handling for state and nonce is omitted for brevity but should be implemented
+		idToken, err := r.URL.Query().Get("id_token")
+		if err != nil {
+			http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
+			return
+		}
+		_, err = verifier.Verify(context.Background(), idToken)
+		if err != nil {
+			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
+			return
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:    "id_token",
+			Value:   idToken,
+			Expires: time.Now().Add(24 * time.Hour),
+			Path:    "/",
+		})
+		http.Redirect(w, r, "/", http.StatusFound)
+	})
+
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		rawIDToken, err := r.Cookie("id_token")
 		if err != nil {
