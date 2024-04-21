@@ -31,11 +31,11 @@ func initOIDC() {
 	}
 	verifier = oidcProvider.Verifier(oidcConfig)
 
-	state, err := generateRandomBytes()
+	state, err = generateRandomString()
 	if err != nil {
 		log.Fatalf("Unable to generate random state: %s", err)
 	}
-	nonce, err := generateRandomBytes()
+	nonce, err = generateRandomString()
 	if err != nil {
 		log.Fatalf("Unable to generate random nonce: %v", err)
 	}
@@ -46,11 +46,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
-func callbackHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
-		return
-	}
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
@@ -80,7 +75,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	http.Redirect(w, r, "/", http.StatusFound)
 }
-func generateRandomBytes() ([]byte, error) {
+func generateRandomString() ([]byte, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, 16)
 	for i := range b {
@@ -89,9 +84,6 @@ func generateRandomBytes() ([]byte, error) {
 			return nil, err
 		}
 		b[i] = charset[randomIdx.Int64()]
-	}
-	if err != nil {
-		return nil, err
 	}
 	return b, nil
 }
