@@ -47,9 +47,26 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get OIDC provider: %v", err)
 	}
+	oidcConfig := &oidc.Config{
+		ClientID: "your-client-id", // Replace with your client ID
+	}
+	verifier := oidcProvider.Verifier(oidcConfig)
+
 
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
-	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		rawIDToken, err := r.Cookie("id_token")
+		if err != nil {
+			http.Error(w, "No ID token found", http.StatusUnauthorized)
+			return
+		}
+		idToken, err := verifier.Verify(context.Background(), rawIDToken.Value)
+		if err != nil {
+			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
+			return
+		}
+		_ = idToken // Use idToken for further user information if needed
+
 		if err := pages.Execute(w, nil); err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error rendering page template: %v", err)
