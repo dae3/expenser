@@ -58,16 +58,14 @@ func main() {
 			return
 		}
 		var claims struct {
-		Email string `json:"email"`
-	}
-	if err := idToken.Claims(&claims); err != nil {
-		http.Error(w, "Failed to parse ID token claims", http.StatusInternalServerError)
-		return
-	}
-	email := claims.Email
+			Email string `json:"email"`
+		}
+		if err := idToken.Claims(&claims); err != nil {
+			http.Error(w, "Failed to parse ID token claims", http.StatusInternalServerError)
+			return
+		}
 
-
-		if err := pages.Execute(w, nil); err != nil {
+		if err := pages.Execute(w, claims); err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error rendering page template: %v", err)
 		}
