@@ -60,8 +60,15 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 func generateRandomBytes() ([]byte, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, 16)
-	_, err := rand.Read(b)
+	for i := range b {
+		randomIdx, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return nil, err
+		}
+		b[i] = charset[randomIdx.Int64()]
+	}
 	if err != nil {
 		return nil, err
 	}
