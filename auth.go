@@ -31,12 +31,16 @@ func initOIDC() {
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	state := "example-state" // This should be a random or session-specific value in production
 	nonce := "example-nonce" // This should also be a random or session-specific value
-	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid%20email&redirect_uri=http://localhost:8080/callback&state=%s&nonce=%s&response_mode=query", oidcProvider.Endpoint().AuthURL, os.Getenv("OIDC_CLIENT_ID"), state, nonce)
+	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid%20email&redirect_uri=http://localhost:8080/callback&state=%s&nonce=%s&response_mode=form_post", oidcProvider.Endpoint().AuthURL, os.Getenv("OIDC_CLIENT_ID"), state, nonce)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
-	idToken := r.URL.Query().Get("id_token")
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+	idToken := r.FormValue("id_token")
 	if idToken == "" {
 		http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
 		return
