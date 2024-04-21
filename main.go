@@ -10,8 +10,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/coreos/go-oidc"
-
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -42,43 +40,11 @@ func truncatedFormStringValue(r *http.Request, fieldName string) (error, string)
 }
 
 func main() {
-	oidcProvider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
-	if err != nil {
-		log.Fatalf("Failed to get OIDC provider: %v", err)
-	}
-	oidcConfig := &oidc.Config{
-		ClientID: os.Getenv("OIDC_CLIENT_ID"),
-	}
-	verifier := oidcProvider.Verifier(oidcConfig)
-
+	initOIDC()
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
 
-	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		state := "example-state" // This should be a random or session-specific value in production
-		nonce := "example-nonce" // This should also be a random or session-specific value
-		http.Redirect(w, r, oidcProvider.Endpoint().AuthURL+"?client_id="+os.Getenv("OIDC_CLIENT_ID")+"&response_type=id_token&scope=openid email&redirect_uri=http://localhost:8080/callback&state="+state+"&nonce="+nonce, http.StatusFound)
-	})
-
-	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		// Error handling for state and nonce is omitted for brevity but should be implemented
-		idToken := r.URL.Query().Get("id_token")
-		if idToken == "" {
-			http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
-			return
-		}
-		_, err = verifier.Verify(context.Background(), idToken)
-		if err != nil {
-			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
-			return
-		}
-		http.SetCookie(w, &http.Cookie{
-			Name:    "id_token",
-			Value:   idToken,
-			Expires: time.Now().Add(24 * time.Hour),
-			Path:    "/",
-		})
-		http.Redirect(w, r, "/", http.StatusFound)
-	})
+	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/callback", callbackHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		rawIDToken, err := r.Cookie("id_token")
