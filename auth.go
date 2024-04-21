@@ -51,6 +51,17 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
 		return
 	}
+func callbackHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+	receivedState := r.FormValue("state")
+	receivedNonce := r.FormValue("nonce")
+	if receivedState != string(state) || receivedNonce != string(nonce) {
+		http.Error(w, "Invalid state or nonce", http.StatusUnauthorized)
+		return
+	}
 	idToken := r.FormValue("id_token")
 	if idToken == "" {
 		http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
