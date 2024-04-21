@@ -61,8 +61,8 @@ func main() {
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		// Error handling for state and nonce is omitted for brevity but should be implemented
-		idToken, err := r.URL.Query().Get("id_token")
-		if err != nil {
+		idToken := r.URL.Query().Get("id_token")
+		if idToken == "" {
 			http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
 			return
 		}
@@ -79,7 +79,6 @@ func main() {
 		})
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
-
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		rawIDToken, err := r.Cookie("id_token")
