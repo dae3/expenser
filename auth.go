@@ -51,9 +51,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
 		return
 	}
-	receivedState := r.FormValue("state")
-	receivedNonce := r.FormValue("nonce")
-	if receivedState != string(state) || receivedNonce != string(nonce) {
+	if r.FormValue("state") != string(state) || r.FormValue("nonce") != string(nonce) {
 		http.Error(w, "Invalid state or nonce", http.StatusUnauthorized)
 		return
 	}
@@ -70,20 +68,21 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "id_token",
 		Value:   idToken,
-		Expires: time.Now().Add(24 * time.Hour),
+		Expires: time.Now().Add(time.Hour),
 		Path:    "/",
 	})
 	http.Redirect(w, r, "/", http.StatusFound)
 }
-func generateRandomString() ([]byte, error) {
+
+func generateRandomString() (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, 16)
 	for i := range b {
 		randomIdx, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		b[i] = charset[randomIdx.Int64()]
 	}
-	return b, nil
+	return string(b), nil
 }
