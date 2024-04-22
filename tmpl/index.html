@@ -26,7 +26,7 @@
         </div>
         <div class="row">
           <label for="amount">Amount</label>
-          <input type="number" step="0.10" min="0" id="amount" name="amount" />
+          <input mode="numeric" pattern="[0-9\.]+" id="amount" name="amount" />
         </div>
         <div class="row">
           <input class="button-primary" type="button" value="Submit" hx-post="/submit" hx-target="closest body">
