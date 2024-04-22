@@ -18,4 +18,8 @@ jobs:
         source: .
         region: australia-southeast1
         suffix: '${{ github.sha }}'
-        environment_variables: 'MY_SECRET=${{ secrets.MY_SECRET }}'
+        env_vars: |
+          OIDC_CALLBACK_URL=https://expenser-pmc7ekho2q-ts.a.run.app/callback
+        secrets: |-
+          OIDC_CLIENT_ID=oidc_client_id:2
+          SHEET_ID=sheet_id:1
