@@ -16,8 +16,8 @@ import (
 var (
 	oidcProvider *oidc.Provider
 	verifier     *oidc.IDTokenVerifier
-	state        []byte
-	nonce        []byte
+	state        string
+	nonce        string
 )
 
 func initOIDC() {
