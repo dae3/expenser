@@ -18,3 +18,4 @@ jobs:
         source: .
         region: australia-southeast1
         suffix: '${{ github.sha }}'
+        environment_variables: 'MY_SECRET=${{ secrets.MY_SECRET }}'
