@@ -47,31 +47,35 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
-		return
-	}
-	if r.FormValue("state") != string(state) || r.FormValue("nonce") != string(nonce) {
-		http.Error(w, "Invalid state or nonce", http.StatusUnauthorized)
-		return
-	}
-	idToken := r.FormValue("id_token")
-	if idToken == "" {
-		http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
-		return
-	}
-	_, err := verifier.Verify(context.Background(), idToken)
-	if err != nil {
-		http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
-		return
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:    "id_token",
-		Value:   idToken,
-		Expires: time.Now().Add(time.Hour),
-		Path:    "/",
-	})
-	http.Redirect(w, r, "/", http.StatusFound)
+    if err := r.ParseForm(); err != nil {
+        http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+        return
+    }
+    idToken := r.FormValue("id_token")
+    if idToken == "" {
+        http.Error(w, "ID token not found in callback", http.StatusUnauthorized)
+        return
+    }
+    token, err := verifier.Verify(context.Background(), idToken)
+    if err != nil {
+        http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
+        return
+    }
+    if token.Nonce != string(nonce) {
+        http.Error(w, "Invalid nonce", http.StatusUnauthorized)
+        return
+    }
+    if r.FormValue("state") != string(state) {
+        http.Error(w, "Invalid state", http.StatusUnauthorized)
+        return
+    }
+    http.SetCookie(w, &http.Cookie{
+        Name:    "id_token",
+        Value:   idToken,
+        Expires: time.Now().Add(time.Hour),
+        Path:    "/",
+    })
+    http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func generateRandomString() (string, error) {
