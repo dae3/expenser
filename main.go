@@ -11,7 +11,6 @@ import (
 
 const (
 	envSheetID         = "SHEET_ID"
-	tZ                 = "Australia/Sydney"
 	formFieldMaxLength = 256
 )
 

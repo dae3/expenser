@@ -27,7 +27,7 @@ func appendExpense(data receivedData, ctx context.Context) (err error) {
 	}
 
 	// sheets uses spreadsheet epoch time, ie the integer parts is days since 30 December 1899
-	today := time.Since(time.Date(1899, 12, 30, 0, 0, 0, 0, time.FixedZone(tZ, 0))).Hours() / 24
+	today := time.Since(time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)).Round(time.Hour*24).Hours() / 24
 	emptyString := ""
 
 	req := &sheets.AppendCellsRequest{
