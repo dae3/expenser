@@ -20,6 +20,8 @@ jobs:
         suffix: '${{ github.sha }}'
         env_vars: |
           OIDC_CALLBACK_URL=https://expenser-pmc7ekho2q-ts.a.run.app/callback
+          USERFILE=/users
         secrets: |-
           OIDC_CLIENT_ID=oidc_client_id:2
           SHEET_ID=sheet_id:1
+          /users=users:1
