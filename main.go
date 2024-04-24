@@ -41,25 +41,28 @@ func main() {
 	http.HandleFunc("/callback", callbackHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		rawIDToken, err := r.Cookie("id_token")
-		if err != nil || rawIDToken.Value == "" {
-			http.Redirect(w, r, "/login", http.StatusFound)
-			return
-		}
-		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
+		email, err := authorizeRequest(r)
 		if err != nil {
-			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
+			if err.Error() == "no ID token found" {
+				http.Redirect(w, r, "/login", http.StatusFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			}
 			return
 		}
-		var claims struct {
-			Email string `json:"email"`
-		}
-		if err := idToken.Claims(&claims); err != nil {
-			http.Error(w, "Failed to parse ID token claims", http.StatusInternalServerError)
+		auth, err := isUserAuthorized(email)
+		if err != nil || !auth {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		if err := pages.Execute(w, claims); err != nil {
+		var pagedata struct {
+			Email string
+		}
+
+		pagedata.Email = email
+
+		if err := pages.Execute(w, pagedata); err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error rendering page template: %v", err)
 		}
@@ -70,15 +73,27 @@ func main() {
 	)))
 
 	http.HandleFunc("POST /submit", func(w http.ResponseWriter, r *http.Request) {
+		email, err := authorizeRequest(r)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		auth, err := isUserAuthorized(email)
+		if err != nil || !auth {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		log.Printf("POST /submit from %s\n", r.RemoteAddr)
 		if r.Header["Content-Type"][0] != "application/x-www-form-urlencoded" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "Bad content-type")
+			return
 		}
 
 		if err := r.ParseForm(); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "Failed to parse form: %v', err")
+			return
 		}
 
 		var d receivedData
