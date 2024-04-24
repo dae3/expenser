@@ -70,6 +70,7 @@ func main() {
 	)))
 
 	http.HandleFunc("POST /submit", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("POST /submit from %s\n", r.RemoteAddr)
 		if r.Header["Content-Type"][0] != "application/x-www-form-urlencoded" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "Bad content-type")
@@ -91,14 +92,18 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "errc: %v\nerrd: %v\nerra: %v\nn: %d\nerr: %v", errc, errd, erra, n, err)
 		} else {
+			log.Println("Valid request")
 			if os.Getenv("NO_SHEETS_API") == "" {
 				if err := appendExpense(d, r.Context()); err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					fmt.Fprintf(w, "%v", err)
+					log.Printf("Sheets API error: %v\n", err)
 				} else {
+					log.Println("Saved to Sheets")
 					pages.ExecuteTemplate(w, "submit.html", d)
 				}
 			} else {
+				log.Println("NO_SHEETS_API set: skipping spreadsheet update")
 				pages.ExecuteTemplate(w, "submit.html", d)
 			}
 		}
@@ -108,5 +113,6 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	log.Printf("Listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
