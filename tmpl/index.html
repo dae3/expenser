@@ -9,6 +9,14 @@
 
   <body>
     <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+    <!-- quick entry button handler -->
+    <script>
+      function qe(evt) {
+        let amount = document.getElementById('amount')
+        amount.value = ((amount.value == "" ? 0 : parseFloat(amount.value)) + parseFloat(evt.target.id)).toFixed(2)
+      }
+    </script>
+
     <div class="container">
       <form>
         <div class="row">
@@ -32,6 +40,16 @@
           <button class="button-primary" hx-post="/submit" hx-target="div.container" hx-disabled-elt="this">Submit</button>
         </div>
       </form>
+      <div class="row">
+        <button class="four columns" onclick="qe(event)" id="10">+10</button>
+        <button class="four columns" onclick="qe(event)" id="5">+5</button>
+        <button class="four columns" onclick="qe(event)" id="1">+1</button>
+      </div>
+      <div class="row">
+        <button class="four columns" onclick="qe(event)" id="0.10">+0.10</button>
+        <button class="four columns" onclick="qe(event)" id="0.50">+0.50</button>
+        <button class="four columns" onclick="qe(event)" id="0.01">+0.01</button>
+      </div>
     </div>
     <footer class="u-full-width u-max-full-width" style="text-align:center; font-size:0.8em; color:gray; margin-top:20px;">
       Logged in as: {{.Email}}
