@@ -92,38 +92,46 @@ func generateRandomString() (string, error) {
 	return string(b), nil
 }
 func authorizeRequest(r *http.Request) (string, error) {
-	rawIDToken, err := r.Cookie("id_token")
-	if err != nil || rawIDToken.Value == "" {
-		return "", fmt.Errorf("no ID token found")
+	if os.Getenv("AUTHNZ_DISABLED") != "" {
+		return "me@example.com", nil
+	} else {
+		rawIDToken, err := r.Cookie("id_token")
+		if err != nil || rawIDToken.Value == "" {
+			return "", fmt.Errorf("no ID token found")
+		}
+		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
+		if err != nil {
+			return "", fmt.Errorf("failed to verify ID token: %v", err)
+		}
+		var claims struct {
+			Email string `json:"email"`
+		}
+		if err := idToken.Claims(&claims); err != nil {
+			return "", fmt.Errorf("failed to parse ID token claims: %v", err)
+		}
+		return claims.Email, nil
 	}
-	idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
-	if err != nil {
-		return "", fmt.Errorf("failed to verify ID token: %v", err)
-	}
-	var claims struct {
-		Email string `json:"email"`
-	}
-	if err := idToken.Claims(&claims); err != nil {
-		return "", fmt.Errorf("failed to parse ID token claims: %v", err)
-	}
-	return claims.Email, nil
 }
 
 func isUserAuthorized(email string) (bool, error) {
-	file, err := os.Open(os.Getenv("USERFILE"))
-	if err != nil {
-		return false, fmt.Errorf("failed to open user file: %v", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		if scanner.Text() == email {
-			return true, nil
+	if os.Getenv("AUTHNZ_DISABLED") != "" {
+		return true, nil
+	} else {
+		file, err := os.Open(os.Getenv("USERFILE"))
+		if err != nil {
+			return false, fmt.Errorf("failed to open user file: %v", err)
 		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			if scanner.Text() == email {
+				return true, nil
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			return false, fmt.Errorf("error reading user file: %v", err)
+		}
+		return false, nil
 	}
-	if err := scanner.Err(); err != nil {
-		return false, fmt.Errorf("error reading user file: %v", err)
-	}
-	return false, nil
 }
