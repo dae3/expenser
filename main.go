@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	envSheetID         = "SHEET_ID"
+	envSheetID         = "EXPENSER_SHEET_ID"
 	formFieldMaxLength = 256
 )
 
@@ -107,7 +107,7 @@ func main() {
 			fmt.Fprintf(w, "errc: %v\nerrd: %v\nerra: %v\nn: %d\nerr: %v", errc, errd, erra, n, err)
 		} else {
 			log.Println("Valid request")
-			if os.Getenv("NO_SHEETS_API") == "" {
+			if os.Getenv("EXPENSER_NO_SHEETS_API") == "" {
 				if err := appendExpense(d, r.Context()); err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					fmt.Fprintf(w, "%v", err)
@@ -123,7 +123,7 @@ func main() {
 		}
 	})
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("EXPENSER_PORT")
 	if port == "" {
 		port = "8080"
 	}
