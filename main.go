@@ -20,10 +20,14 @@ type receivedData struct {
 	Amount      float64
 }
 
-func truncatedFormStringValue(r *http.Request, fieldName string) (error, string) {
+func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool) (error, string) {
 	val := r.Form[fieldName]
 	if val == nil || val[0] == "" {
-		return errors.New(fmt.Sprintf("Field %s not present in form", fieldName)), ""
+		if mandatory {
+			return errors.New(fmt.Sprintf("Field %s not present in form", fieldName)), ""
+		} else {
+			return nil, ""
+		}
 	}
 
 	if len(val[0]) > formFieldMaxLength {
@@ -98,9 +102,9 @@ func main() {
 		var d receivedData
 		var errc, errd error
 		// some dumb input protections
-		errc, d.Category = truncatedFormStringValue(r, "category")
-		errd, d.Description = truncatedFormStringValue(r, "description")
-		erra, amountStr := truncatedFormStringValue(r, "amount")
+		errc, d.Category = truncatedFormStringValue(r, "category", true)
+		errd, d.Description = truncatedFormStringValue(r, "description", false)
+		erra, amountStr := truncatedFormStringValue(r, "amount", true)
 		n, err := fmt.Sscanf(amountStr, "%f", &d.Amount)
 		if errc != nil || errd != nil || erra != nil || n == 0 || err != nil {
 			w.WriteHeader(http.StatusBadRequest)
