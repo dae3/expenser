@@ -1,0 +1,16 @@
+{
+  "short_name": "Expenser",
+  "name": "Expenser - Track Your Expenses",
+  "icons": [
+    {
+      "src": "/static/dollar-symbol.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#4A90E2"
+}

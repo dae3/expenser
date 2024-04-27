@@ -44,6 +44,10 @@ func main() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/callback", callbackHandler)
 
+	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "tmpl/manifest.json.tmpl")
+	})
+
 	http.HandleFunc("POST /api/train", TrainApiHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -82,9 +86,14 @@ func main() {
 		}
 	})
 
-	http.Handle("GET /css/", http.StripPrefix("/css", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) { http.ServeFileFS(w, r, os.DirFS("./css"), r.URL.Path) },
+	http.Handle("GET /static/", http.StripPrefix("/static", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) { http.ServeFileFS(w, r, os.DirFS("./static"), r.URL.Path) },
 	)))
+
+	// service worker has to be served from / to have access to that scope
+	http.HandleFunc("GET /worker.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/worker.js")
+	})
 
 	http.HandleFunc("POST /submit", func(w http.ResponseWriter, r *http.Request) {
 		email, err := authorizeRequest(r)

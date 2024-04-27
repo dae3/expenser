@@ -27,3 +27,6 @@ credentials.json
 
 # air scratch
 tmp/
+
+# aider scratch
+.aider*
