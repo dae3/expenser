@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -60,10 +61,18 @@ func main() {
 		}
 
 		var pagedata struct {
-			Email string
+			Categories []string
+			Email      string
 		}
 
 		pagedata.Email = email
+		cat, err := getStringValuesFromNamedRange("Categories", context.Background())
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error getting category list: %v", err)
+			return
+		}
+		pagedata.Categories = cat
 
 		if err := pages.Execute(w, pagedata); err != nil {
 			w.WriteHeader(500)

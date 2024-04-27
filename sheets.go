@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -11,21 +12,55 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-func appendExpense(data receivedData, ctx context.Context) (err error) {
+var (
+	svc     *sheets.Service
+	sheetID string
+)
+
+func init() {
+	ctx := context.Background()
 	creds, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/drive")
 	if err != nil {
-		return fmt.Errorf("Unable to find Application Default Credentials: %v", err)
+		log.Fatalf("Unable to find Application Default Credentials: %v", err)
 	}
 
-	svc, err := sheets.NewService(ctx, option.WithCredentials(creds))
+	svc, err = sheets.NewService(ctx, option.WithCredentials(creds))
 	if err != nil {
-		return fmt.Errorf("Unable to initialize Sheets client: %v", err)
+		log.Fatalf("Unable to initialize Sheets client: %v", err)
 	}
-	sheetID := os.Getenv(envSheetID)
+	sheetID = os.Getenv(envSheetID)
 	if sheetID == "" {
-		return fmt.Errorf("%s environment variable not set", envSheetID)
+		log.Fatalf("%s environment variable not set", envSheetID)
 	}
 
+	_, err = getStringValuesFromNamedRange("Categories", ctx)
+}
+
+func getStringValuesFromNamedRange(rangeName string, ctx context.Context) ([]string, error) {
+	req := &sheets.BatchGetValuesByDataFilterRequest{
+		DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
+	}
+	resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
+	}
+	if len(resp.ValueRanges) == 0 {
+		return nil, fmt.Errorf("no data found for named range: %s", rangeName)
+	}
+
+	vr := resp.ValueRanges[0].ValueRange.Values
+	values := make([]string, len(vr))
+	for i, va := range vr {
+		v, ok := va[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("value at index %d is not of type string", i)
+		}
+		values[i] = v
+	}
+	return values, nil
+}
+
+func appendExpense(data receivedData, ctx context.Context) (err error) {
 	// sheets uses spreadsheet epoch time, ie the integer parts is days since 30 December 1899
 	today := time.Since(time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)).Round(time.Hour*24).Hours() / 24
 	emptyString := ""

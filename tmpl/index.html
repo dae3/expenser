@@ -38,10 +38,9 @@
         <div class="row">
           <label for="category">Category</label>
           <select id="category" name="category">
-            <option value="Eating out">Eating out</option>
-            <option value="Car">Car</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Health">Health</option>
+            {{ range .Categories }}
+            <option value="{{.}}">{{.}}</option>
+            {{ end }}
           </select>
         </div>
         <div class="row">
