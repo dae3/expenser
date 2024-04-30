@@ -95,14 +95,18 @@ func appendExpense(data receivedData, ctx context.Context) (err error) {
 			},
 		},
 	}
-	_, err = svc.Spreadsheets.BatchUpdate(sheetID, &sheets.BatchUpdateSpreadsheetRequest{
-		IncludeSpreadsheetInResponse: false,
-		Requests:                     []*sheets.Request{{AppendCells: req}},
-	}).Do()
 
-	if err != nil {
-		return fmt.Errorf("Batch update failed: %v", err)
+	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
+		log.Println("Sheets API disabled, skipping")
+	} else {
+		_, err = svc.Spreadsheets.BatchUpdate(sheetID, &sheets.BatchUpdateSpreadsheetRequest{
+			IncludeSpreadsheetInResponse: false,
+			Requests:                     []*sheets.Request{{AppendCells: req}},
+		}).Do()
+
+		if err != nil {
+			return fmt.Errorf("Batch update failed: %v", err)
+		}
 	}
-
 	return nil
 }

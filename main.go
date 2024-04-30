@@ -120,17 +120,12 @@ func main() {
 			fmt.Fprintf(w, "errc: %v\nerrd: %v\nerra: %v\nn: %d\nerr: %v", errc, errd, erra, n, err)
 		} else {
 			log.Println("Valid request")
-			if os.Getenv("EXPENSER_NO_SHEETS_API") == "" {
-				if err := appendExpense(d, r.Context()); err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					fmt.Fprintf(w, "%v", err)
-					log.Printf("Sheets API error: %v\n", err)
-				} else {
-					log.Println("Saved to Sheets")
-					pages.ExecuteTemplate(w, "submit.html", d)
-				}
+			if err := appendExpense(d, r.Context()); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, "%v", err)
+				log.Printf("Sheets API error: %v\n", err)
 			} else {
-				log.Println("NO_SHEETS_API set: skipping spreadsheet update")
+				log.Println("Saved to Sheets")
 				pages.ExecuteTemplate(w, "submit.html", d)
 			}
 		}
