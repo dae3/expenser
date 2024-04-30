@@ -44,6 +44,8 @@ func main() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/callback", callbackHandler)
 
+	http.HandleFunc("POST /api/train", TrainApiHandler)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		email, err := authorizeRequest(r)
 		if err != nil {
