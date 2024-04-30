@@ -18,6 +18,10 @@ var (
 )
 
 func init() {
+	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
+		return
+	}
+
 	ctx := context.Background()
 	creds, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/drive")
 	if err != nil {
@@ -37,25 +41,31 @@ func init() {
 }
 
 func getStringValuesFromNamedRange(rangeName string, ctx context.Context) ([]string, error) {
-	req := &sheets.BatchGetValuesByDataFilterRequest{
-		DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
-	}
-	resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
-	}
-	if len(resp.ValueRanges) == 0 {
-		return nil, fmt.Errorf("no data found for named range: %s", rangeName)
-	}
+	var values []string
 
-	vr := resp.ValueRanges[0].ValueRange.Values
-	values := make([]string, len(vr))
-	for i, va := range vr {
-		v, ok := va[0].(string)
-		if !ok {
-			return nil, fmt.Errorf("value at index %d is not of type string", i)
+	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
+		values = []string{"cat1", "cat2", "cat3"}
+	} else {
+		req := &sheets.BatchGetValuesByDataFilterRequest{
+			DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
 		}
-		values[i] = v
+		resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
+		if err != nil {
+			return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
+		}
+		if len(resp.ValueRanges) == 0 {
+			return nil, fmt.Errorf("no data found for named range: %s", rangeName)
+		}
+
+		vr := resp.ValueRanges[0].ValueRange.Values
+		values = make([]string, len(vr))
+		for i, va := range vr {
+			v, ok := va[0].(string)
+			if !ok {
+				return nil, fmt.Errorf("value at index %d is not of type string", i)
+			}
+			values[i] = v
+		}
 	}
 	return values, nil
 }
