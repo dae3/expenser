@@ -25,6 +25,7 @@ jobs:
           EXPENSER_OIDC_CALLBACK_URL=https://expenser-pmc7ekho2q-ts.a.run.app/callback
           EXPENSER_USERFILE=/data/users
         secrets: |-
+          EXPENSER_API_KEY=api-key:1
           EXPENSER_OIDC_CLIENT_ID=oidc_client_id:2
           EXPENSER_SHEET_ID=sheet_id:1
           /data/users=users:1
