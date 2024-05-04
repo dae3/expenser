@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/spf13/viper"
 	"context"
 	"errors"
 	"fmt"
@@ -38,6 +39,22 @@ func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool)
 }
 
 func main() {
+	viper.SetEnvPrefix("expenser") // Set the prefix for environment variables
+	viper.AutomaticEnv()
+	viper.SetConfigName("config") // Name of the config file (without extension)
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("$HOME/.appname")
+	viper.AddConfigPath("/etc/appname/")
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore if desired
+		} else {
+			// Config file was found but another error was produced
+			log.Fatalf("fatal error config file: %v", err)
+		}
+	}
+
 	initOIDC()
 	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
 
