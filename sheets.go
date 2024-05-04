@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/viper"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -18,7 +19,7 @@ var (
 )
 
 func init() {
-	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
+	if viper.GetString("no_sheets_api") != "" {
 		return
 	}
 
@@ -33,6 +34,7 @@ func init() {
 		log.Fatalf("Unable to initialize Sheets client: %v", err)
 	}
 	sheetID = os.Getenv(envSheetID)
+	sheetID = viper.GetString("sheet_id")
 	if sheetID == "" {
 		log.Fatalf("%s environment variable not set", envSheetID)
 	}
@@ -43,7 +45,7 @@ func init() {
 func getStringValuesFromNamedRange(rangeName string, ctx context.Context) ([]string, error) {
 	var values []string
 
-	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
+	if viper.GetString("no_sheets_api") != "" {
 		values = []string{"cat1", "cat2", "cat3"}
 	} else {
 		req := &sheets.BatchGetValuesByDataFilterRequest{
@@ -96,7 +98,7 @@ func appendExpense(data receivedData, ctx context.Context) (err error) {
 		},
 	}
 
-	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
+	if viper.GetString("no_sheets_api") != "" {
 		log.Println("Sheets API disabled, skipping")
 	} else {
 		_, err = svc.Spreadsheets.BatchUpdate(sheetID, &sheets.BatchUpdateSpreadsheetRequest{

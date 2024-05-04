@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -28,7 +29,7 @@ func initOIDC() {
 		log.Fatalf("Failed to get OIDC provider: %v", err)
 	}
 	oidcConfig := &oidc.Config{
-		ClientID: os.Getenv("EXPENSER_OIDC_CLIENT_ID"),
+		ClientID: viper.GetString("oidc_client_id"),
 	}
 	verifier = oidcProvider.Verifier(oidcConfig)
 
@@ -43,7 +44,7 @@ func initOIDC() {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid%%20email&redirect_uri=%s&state=%s&nonce=%s&response_mode=form_post", oidcProvider.Endpoint().AuthURL, os.Getenv("EXPENSER_OIDC_CLIENT_ID"), os.Getenv("EXPENSER_OIDC_CALLBACK_URL"), state, nonce)
+	authURL := fmt.Sprintf("%s?client_id=%s&response_type=id_token&scope=openid%%20email&redirect_uri=%s&state=%s&nonce=%s&response_mode=form_post", oidcProvider.Endpoint().AuthURL, viper.GetString("oidc_client_id"), viper.GetString("oidc_callback_url"), state, nonce)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
@@ -92,7 +93,7 @@ func generateRandomString() (string, error) {
 	return string(b), nil
 }
 func authorizeRequest(r *http.Request) (string, error) {
-	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
+	if viper.GetString("authnz_disabled") != "" {
 		return "me@example.com", nil
 	} else {
 		rawIDToken, err := r.Cookie("id_token")
@@ -114,10 +115,10 @@ func authorizeRequest(r *http.Request) (string, error) {
 }
 
 func isUserAuthorized(email string) (bool, error) {
-	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
+	if viper.GetString("authnz_disabled") != "" {
 		return true, nil
 	} else {
-		file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
+		file, err := os.Open(viper.GetString("userfile"))
 		if err != nil {
 			return false, fmt.Errorf("failed to open user file: %v", err)
 		}
