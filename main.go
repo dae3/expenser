@@ -159,7 +159,7 @@ func main() {
 		}
 	})
 
-	port := os.Getenv("EXPENSER_PORT")
+	port := viper.GetString("port")
 	if port == "" {
 		port = "8080"
 	}
