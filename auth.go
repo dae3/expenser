@@ -23,7 +23,7 @@ var (
 
 func initOIDC() {
 	var err error
-	oidcProvider, err = oidc.NewProvider(context.Background(), "https://accounts.google.com")
+	oidcProvider, err = oidc.NewProvider(context.Background(), os.Getenv("EXPENSER_OIDC_IDP_ENDPOINT"))
 	if err != nil {
 		log.Fatalf("Failed to get OIDC provider: %v", err)
 	}
@@ -90,6 +90,28 @@ func generateRandomString() (string, error) {
 		b[i] = charset[randomIdx.Int64()]
 	}
 	return string(b), nil
+}
+
+func AuthorizeHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		email, err := authorizeRequest(r)
+		if err != nil {
+			if err.Error() == "no ID token found" {
+				http.Redirect(w, r, "/login", http.StatusFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			}
+		}
+
+		auth, err := isUserAuthorized(email)
+		if err != nil || !auth {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		r.Header.Add("email", email)
+		h.ServeHTTP(w, r)
+	})
 }
 func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {

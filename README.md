@@ -13,3 +13,4 @@ A simple expense capturing PWA, using Google Sheets as the backend.
 | EXPENSER_AUTHNZ_DISABLED     | Disables authentication and authorization if set. |
 | EXPENSER_NO_SHEETS_API       | Disables interaction with Google Sheets API if set. |
 | EXPENSER_API_KEY             | The API key. |
+| EXPENSER_OIDC_IDP_ENDPOINT | The IdP info endpoint |
