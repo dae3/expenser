@@ -119,6 +119,49 @@ func AuthorizeHandler(h http.Handler) http.Handler {
 }
 func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
+		return "me@example.com", nil
+	} else {
+		rawIDToken, err := r.Cookie("id_token")
+		if err != nil || rawIDToken.Value == "" {
+			return "", fmt.Errorf("no ID token found")
+		}
+		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
+		if err != nil {
+			return "", fmt.Errorf("failed to verify ID token: %v", err)
+		}
+		var claims struct {
+			Email string `json:"email"`
+		}
+		if err := idToken.Claims(&claims); err != nil {
+			return "", fmt.Errorf("failed to parse ID token claims: %v", err)
+		}
+		return claims.Email, nil
+	}
+}
+
+func AuthorizeHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		email, err := authorizeRequest(r)
+		if err != nil {
+			if err.Error() == "no ID token found" {
+				http.Redirect(w, r, "/login", http.StatusFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			}
+		}
+
+		auth, err := isUserAuthorized(email)
+		if err != nil || !auth {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		r.Header.Add("email", email)
+		h.ServeHTTP(w, r)
+	})
+}
+func authorizeRequest(r *http.Request) (string, error) {
+	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
 		next.ServeHTTP(w, r)
 		return
 	}

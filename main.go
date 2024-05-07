@@ -8,14 +8,18 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"text/template"
 	"strings"
+	"text/template"
 )
 
 const (
 	envSheetID              = "EXPENSER_SHEET_ID"
 	formFieldMaxLength      = 256
 	favouriteQueryParameter = "fav"
+)
+
+var (
+	pages *template.Template
 )
 
 var (
@@ -57,12 +61,9 @@ func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool)
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	var pagedata struct {
-		Categories           []string
-		FavouriteCategory    string
-		FavouriteDescription string
-		FavouriteAmount      string
-		Favourites           [][]string
-		Email                string
+		Categories []string
+		Favourites [][]string
+		Email      string
 	}
 
 	pagedata.Email = r.Header.Get("email")
