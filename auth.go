@@ -119,48 +119,57 @@ func AuthorizeHandler(h http.Handler) http.Handler {
 }
 func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-		return "me@example.com", nil // Bypass authorization
-	} else {
-		rawIDToken, err := r.Cookie("id_token")
-		if err != nil || rawIDToken.Value == "" {
-			http.Error(w, "No ID token found", http.StatusUnauthorized)
-			return "", fmt.Errorf("no ID token found") // No token, unauthorized
-		}
-		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
-		if err != nil {
-			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
-			return "", fmt.Errorf("failed to verify ID token: %v", err) // Verification failed, unauthorized
-		}
-		var claims struct {
-			Email string `json:"email"`
-		}
-		if err := idToken.Claims(&claims); err != nil {
-			http.Error(w, "Failed to parse ID token claims", http.StatusUnauthorized)
-			return "", fmt.Errorf("failed to parse ID token claims: %v", err) // Claims parsing failed, unauthorized
-		}
-		return claims.Email, nil // Successfully authorized
+		next.ServeHTTP(w, r)
+		return
 	}
+
+	file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to open user file: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if scanner.Text() == email {
+			next.ServeHTTP(w, r)
+			return
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		http.Error(w, fmt.Sprintf("error reading user file: %v", err), http.StatusInternalServerError)
+		return
+	}
+	http.Error(w, "User not authorized", http.StatusUnauthorized)
 }
 
-func isUserAuthorized(email string) (bool, error) {
-	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-		return true, nil
-	} else {
-		file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
+func isUserAuthorized(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		email, err := authorizeRequest(w, r)
 		if err != nil {
-			return false, fmt.Errorf("failed to open user file: %v", err)
+			// Error is already handled by authorizeRequest
+			return
 		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			if scanner.Text() == email {
-				return true, nil
+		if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
+			return true, nil
+		} else {
+			file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
+			if err != nil {
+				return false, fmt.Errorf("failed to open user file: %v", err)
 			}
+			defer file.Close()
+
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				if scanner.Text() == email {
+					return true, nil
+				}
+			}
+			if err := scanner.Err(); err != nil {
+				return false, fmt.Errorf("error reading user file: %v", err)
+			}
+			return false, nil
 		}
-		if err := scanner.Err(); err != nil {
-			return false, fmt.Errorf("error reading user file: %v", err)
-		}
-		return false, nil
-	}
+	})
 }
