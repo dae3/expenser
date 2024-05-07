@@ -91,32 +91,6 @@ func generateRandomString() (string, error) {
 	}
 	return string(b), nil
 }
-		if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to open user file: %v", err), http.StatusInternalServerError)
-			return
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			if scanner.Text() == email {
-				next.ServeHTTP(w, r)
-				return
-			}
-		}
-		if err := scanner.Err(); err != nil {
-			http.Error(w, fmt.Sprintf("error reading user file: %v", err), http.StatusInternalServerError)
-			return
-		}
-		http.Error(w, "User not authorized", http.StatusUnauthorized)
-	})
-}
 func authorizeRequest(w http.ResponseWriter, r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
 		return "me@example.com", nil // Bypass authorization
@@ -142,13 +116,7 @@ func authorizeRequest(w http.ResponseWriter, r *http.Request) (string, error) {
 	}
 }
 
-func isUserAuthorized(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		email, err := authorizeRequest(w, r)
-		if err != nil {
-			// Error is already handled by authorizeRequest
-			return
-		}
+func isUserAuthorized(email string) (bool, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
 		return true, nil
 	} else {
