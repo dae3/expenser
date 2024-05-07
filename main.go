@@ -15,6 +15,10 @@ const (
 	formFieldMaxLength = 256
 )
 
+var (
+	pages *template.Template
+)
+
 type receivedData struct {
 	Category    string
 	Description string
@@ -37,9 +41,31 @@ func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool)
 	return nil, val[0]
 }
 
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+
+	var pagedata struct {
+		Categories []string
+		Email      string
+	}
+
+	pagedata.Email = r.Header.Get("email")
+	cat, err := getStringValuesFromNamedRange("Categories", context.Background())
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "Error getting category list: %v", err)
+		return
+	}
+	pagedata.Categories = cat
+
+	if err := pages.Execute(w, pagedata); err != nil {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "Error rendering page template: %v", err)
+	}
+}
+
 func main() {
 	initOIDC()
-	pages := template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
+	pages = template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
 
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/callback", callbackHandler)
@@ -49,42 +75,7 @@ func main() {
 	})
 
 	http.HandleFunc("POST /api/train", TrainApiHandler)
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		email, err := authorizeRequest(r)
-		if err != nil {
-			if err.Error() == "no ID token found" {
-				http.Redirect(w, r, "/login", http.StatusFound)
-			} else {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
-			return
-		}
-		auth, err := isUserAuthorized(email)
-		if err != nil || !auth {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		var pagedata struct {
-			Categories []string
-			Email      string
-		}
-
-		pagedata.Email = email
-		cat, err := getStringValuesFromNamedRange("Categories", context.Background())
-		if err != nil {
-			w.WriteHeader(500)
-			fmt.Fprintf(w, "Error getting category list: %v", err)
-			return
-		}
-		pagedata.Categories = cat
-
-		if err := pages.Execute(w, pagedata); err != nil {
-			w.WriteHeader(500)
-			fmt.Fprintf(w, "Error rendering page template: %v", err)
-		}
-	})
+	http.Handle("/", AuthorizeHandler(http.HandlerFunc(rootHandler)))
 
 	http.Handle("GET /static/", http.StripPrefix("/static", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) { http.ServeFileFS(w, r, os.DirFS("./static"), r.URL.Path) },

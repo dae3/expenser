@@ -91,28 +91,47 @@ func generateRandomString() (string, error) {
 	}
 	return string(b), nil
 }
-func authorizeRequest(w http.ResponseWriter, r *http.Request) (string, error) {
+
+func AuthorizeHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		email, err := authorizeRequest(r)
+		if err != nil {
+			if err.Error() == "no ID token found" {
+				http.Redirect(w, r, "/login", http.StatusFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			}
+		}
+
+		auth, err := isUserAuthorized(email)
+		if err != nil || !auth {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		r.Header.Add("email", email)
+		h.ServeHTTP(w, r)
+	})
+}
+func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-		return "me@example.com", nil // Bypass authorization
+		return "me@example.com", nil
 	} else {
 		rawIDToken, err := r.Cookie("id_token")
 		if err != nil || rawIDToken.Value == "" {
-			http.Error(w, "No ID token found", http.StatusUnauthorized)
-			return "", fmt.Errorf("no ID token found") // No token, unauthorized
+			return "", fmt.Errorf("no ID token found")
 		}
 		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
 		if err != nil {
-			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
-			return "", fmt.Errorf("failed to verify ID token: %v", err) // Verification failed, unauthorized
+			return "", fmt.Errorf("failed to verify ID token: %v", err)
 		}
 		var claims struct {
 			Email string `json:"email"`
 		}
 		if err := idToken.Claims(&claims); err != nil {
-			http.Error(w, "Failed to parse ID token claims", http.StatusUnauthorized)
-			return "", fmt.Errorf("failed to parse ID token claims: %v", err) // Claims parsing failed, unauthorized
+			return "", fmt.Errorf("failed to parse ID token claims: %v", err)
 		}
-		return claims.Email, nil // Successfully authorized
+		return claims.Email, nil
 	}
 }
 
