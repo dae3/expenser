@@ -119,23 +119,26 @@ func AuthorizeHandler(h http.Handler) http.Handler {
 }
 func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-		return "me@example.com", nil
+		return "me@example.com", nil // Bypass authorization
 	} else {
 		rawIDToken, err := r.Cookie("id_token")
 		if err != nil || rawIDToken.Value == "" {
-			return "", fmt.Errorf("no ID token found")
+			http.Error(w, "No ID token found", http.StatusUnauthorized)
+			return "", fmt.Errorf("no ID token found") // No token, unauthorized
 		}
 		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
 		if err != nil {
-			return "", fmt.Errorf("failed to verify ID token: %v", err)
+			http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
+			return "", fmt.Errorf("failed to verify ID token: %v", err) // Verification failed, unauthorized
 		}
 		var claims struct {
 			Email string `json:"email"`
 		}
 		if err := idToken.Claims(&claims); err != nil {
-			return "", fmt.Errorf("failed to parse ID token claims: %v", err)
+			http.Error(w, "Failed to parse ID token claims", http.StatusUnauthorized)
+			return "", fmt.Errorf("failed to parse ID token claims: %v", err) // Claims parsing failed, unauthorized
 		}
-		return claims.Email, nil
+		return claims.Email, nil // Successfully authorized
 	}
 }
 
