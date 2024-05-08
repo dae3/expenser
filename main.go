@@ -1,18 +1,21 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"text/template"
+	"strings"
 )
 
 const (
-	envSheetID         = "EXPENSER_SHEET_ID"
-	formFieldMaxLength = 256
+	envSheetID              = "EXPENSER_SHEET_ID"
+	formFieldMaxLength      = 256
+	favouriteQueryParameter = "fav"
 )
 
 var (
@@ -23,6 +26,16 @@ type receivedData struct {
 	Category    string
 	Description string
 	Amount      float64
+}
+
+func toFloat(s string) float64 {
+	s = strings.TrimSpace(s)
+	value, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		log.Printf("Error converting string '%s' to float: %v", s, err)
+		return 0
+	}
+	return value
 }
 
 func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool) (error, string) {
@@ -44,18 +57,61 @@ func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool)
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	var pagedata struct {
-		Categories []string
-		Email      string
+		Categories           []string
+		FavouriteCategory    string
+		FavouriteDescription string
+		FavouriteAmount      string
+		Favourites           [][]string
+		Email                string
 	}
 
 	pagedata.Email = r.Header.Get("email")
-	cat, err := getStringValuesFromNamedRange("Categories", context.Background())
+	catrange, err := getNamedRange("Categories", r.Context())
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "Error getting category list: %v", err)
+		return
+	}
+	cat, err := getStringValuesFromRange(catrange)
 	if err != nil {
 		w.WriteHeader(500)
 		fmt.Fprintf(w, "Error getting category list: %v", err)
 		return
 	}
 	pagedata.Categories = cat
+
+	favrange, err := getNamedRange("Favourites", r.Context())
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "Error getting favourite list: %v", err)
+		return
+	}
+
+	favs, err := getArrayFromRange(favrange, 3)
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "Error getting category list: %v", err)
+		return
+	}
+
+	pagedata.Favourites = favs
+
+	q, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if q.Has(favouriteQueryParameter) {
+		selectedFav, err := strconv.ParseInt(q.Get(favouriteQueryParameter), 10, 0)
+		if err != nil || int(selectedFav) > len(cat) {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "Bad favourite parameter")
+			return
+		}
+		pagedata.FavouriteCategory = favs[selectedFav][0]
+		pagedata.FavouriteDescription = favs[selectedFav][1]
+		pagedata.FavouriteAmount = favs[selectedFav][2]
+	}
 
 	if err := pages.Execute(w, pagedata); err != nil {
 		w.WriteHeader(500)
@@ -112,7 +168,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	initOIDC()
-	pages = template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
+	pages = template.Must(template.New("index.html").Funcs(template.FuncMap{"toFloat": toFloat}).ParseGlob("tmpl/*.html"))
 
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/callback", callbackHandler)

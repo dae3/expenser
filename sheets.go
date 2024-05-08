@@ -37,37 +37,56 @@ func init() {
 		log.Fatalf("%s environment variable not set", envSheetID)
 	}
 
-	_, err = getStringValuesFromNamedRange("Categories", ctx)
+	vr, err := getNamedRange("Categories", ctx)
+	if err != nil {
+		log.Fatalf("Unable to get named range: %v", err)
+	}
+	_, err = getStringValuesFromRange(vr)
+	if err != nil {
+		log.Fatalf("Unable to get string values from range: %v", err)
+	}
 }
 
-func getStringValuesFromNamedRange(rangeName string, ctx context.Context) ([]string, error) {
-	var values []string
+func getNamedRange(rangeName string, ctx context.Context) (*sheets.ValueRange, error) {
+	req := &sheets.BatchGetValuesByDataFilterRequest{
+		DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
+	}
+	resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
+	}
+	if len(resp.ValueRanges) == 0 {
+		return nil, fmt.Errorf("no data found for named range: %s", rangeName)
+	}
 
-	if os.Getenv("EXPENSER_NO_SHEETS_API") != "" {
-		values = []string{"cat1", "cat2", "cat3"}
-	} else {
-		req := &sheets.BatchGetValuesByDataFilterRequest{
-			DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
-		}
-		resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
-		if err != nil {
-			return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
-		}
-		if len(resp.ValueRanges) == 0 {
-			return nil, fmt.Errorf("no data found for named range: %s", rangeName)
-		}
+	return resp.ValueRanges[0].ValueRange, nil
+}
 
-		vr := resp.ValueRanges[0].ValueRange.Values
-		values = make([]string, len(vr))
-		for i, va := range vr {
-			v, ok := va[0].(string)
-			if !ok {
-				return nil, fmt.Errorf("value at index %d is not of type string", i)
-			}
-			values[i] = v
+func getStringValuesFromRange(vr *sheets.ValueRange) ([]string, error) {
+	values := make([]string, len(vr.Values))
+	for i, va := range vr.Values {
+		v, ok := va[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("value at index %d is not of type string", i)
 		}
+		values[i] = v
 	}
 	return values, nil
+}
+
+func getArrayFromRange(vr *sheets.ValueRange, columns int) ([][]string, error) {
+	array := make([][]string, len(vr.Values))
+	for i, va := range vr.Values {
+		array[i] = make([]string, columns)
+		for j, aa := range va {
+			v, ok := aa.(string)
+			if !ok {
+				return nil, fmt.Errorf("value at index (%d, %d) is not of type string", i)
+			}
+			array[i][j] = v
+		}
+	}
+	return array, nil
 }
 
 func appendExpense(data receivedData, ctx context.Context) (err error) {
