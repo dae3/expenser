@@ -1,0 +1,25 @@
+name: Renovate
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # At 00:00 on Sunday
+  push:
+    paths: .github/workflows/renovate.yaml
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/renovate/renovate:latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    env:
+      RENOVATE_PLATFORM: github
+      RENOVATE_REPOSITORIES: ${{ github.repository }}
+      RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Run Renovate
+        run: renovate
