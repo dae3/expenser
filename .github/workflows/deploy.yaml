@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - .github/workflows/renovate.yaml
 jobs:
   deploy:
     runs-on: ubuntu-latest
