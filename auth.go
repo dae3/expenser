@@ -22,6 +22,10 @@ var (
 )
 
 func initOIDC() {
+	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
+		return
+	}
+
 	var err error
 	oidcProvider, err = oidc.NewProvider(context.Background(), os.Getenv("EXPENSER_OIDC_IDP_ENDPOINT"))
 	if err != nil {
