@@ -25,7 +25,7 @@ func TrainApiHandler(w http.ResponseWriter, r *http.Request) {
 
 	expense := receivedData{
 		Category:    "Car",
-		Description: "Public transport",
+		Description: "Transport/tolls/parking",
 		Amount:      17.80,
 	}
 	err := appendExpense(expense, r.Context())
