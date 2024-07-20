@@ -22,10 +22,6 @@ var (
 	pages *template.Template
 )
 
-var (
-	pages *template.Template
-)
-
 type receivedData struct {
 	Category    string
 	Description string
@@ -61,9 +57,12 @@ func truncatedFormStringValue(r *http.Request, fieldName string, mandatory bool)
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	var pagedata struct {
-		Categories []string
-		Favourites [][]string
-		Email      string
+		Categories           []string
+		FavouriteCategory    string
+		FavouriteDescription string
+		FavouriteAmount      string
+		Favourites           [][]string
+		Email                string
 	}
 
 	pagedata.Email = r.Header.Get("email")

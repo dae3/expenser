@@ -117,49 +117,7 @@ func AuthorizeHandler(h http.Handler) http.Handler {
 		h.ServeHTTP(w, r)
 	})
 }
-func authorizeRequest(r *http.Request) (string, error) {
-	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-		return "me@example.com", nil
-	} else {
-		rawIDToken, err := r.Cookie("id_token")
-		if err != nil || rawIDToken.Value == "" {
-			return "", fmt.Errorf("no ID token found")
-		}
-		idToken, err := verifier.Verify(r.Context(), rawIDToken.Value)
-		if err != nil {
-			return "", fmt.Errorf("failed to verify ID token: %v", err)
-		}
-		var claims struct {
-			Email string `json:"email"`
-		}
-		if err := idToken.Claims(&claims); err != nil {
-			return "", fmt.Errorf("failed to parse ID token claims: %v", err)
-		}
-		return claims.Email, nil
-	}
-}
 
-func AuthorizeHandler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		email, err := authorizeRequest(r)
-		if err != nil {
-			if err.Error() == "no ID token found" {
-				http.Redirect(w, r, "/login", http.StatusFound)
-			} else {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
-		}
-
-		auth, err := isUserAuthorized(email)
-		if err != nil || !auth {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		r.Header.Add("email", email)
-		h.ServeHTTP(w, r)
-	})
-}
 func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
 		next.ServeHTTP(w, r)
@@ -187,32 +145,25 @@ func authorizeRequest(r *http.Request) (string, error) {
 	http.Error(w, "User not authorized", http.StatusUnauthorized)
 }
 
-func isUserAuthorized(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		email, err := authorizeRequest(w, r)
+func isUserAuthorized(email string) (bool, error) {
+	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
+		return true, nil
+	} else {
+		file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
 		if err != nil {
-			// Error is already handled by authorizeRequest
-			return
+			return false, fmt.Errorf("failed to open user file: %v", err)
 		}
-		if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
-			return true, nil
-		} else {
-			file, err := os.Open(os.Getenv("EXPENSER_USERFILE"))
-			if err != nil {
-				return false, fmt.Errorf("failed to open user file: %v", err)
-			}
-			defer file.Close()
+		defer file.Close()
 
-			scanner := bufio.NewScanner(file)
-			for scanner.Scan() {
-				if scanner.Text() == email {
-					return true, nil
-				}
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			if scanner.Text() == email {
+				return true, nil
 			}
-			if err := scanner.Err(); err != nil {
-				return false, fmt.Errorf("error reading user file: %v", err)
-			}
-			return false, nil
 		}
-	})
+		if err := scanner.Err(); err != nil {
+			return false, fmt.Errorf("error reading user file: %v", err)
+		}
+		return false, nil
+	}
 }
