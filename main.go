@@ -22,6 +22,10 @@ var (
 	pages *template.Template
 )
 
+var (
+	pages *template.Template
+)
+
 type receivedData struct {
 	Category    string
 	Description string
@@ -165,10 +169,9 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
 func main() {
 	initOIDC()
-	pages = template.Must(template.New("index.html").Funcs(template.FuncMap{"toFloat": toFloat}).ParseGlob("tmpl/*.html"))
+	pages = template.Must(template.New("index.html").ParseGlob("tmpl/*.html"))
 
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/callback", callbackHandler)

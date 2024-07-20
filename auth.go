@@ -117,7 +117,6 @@ func AuthorizeHandler(h http.Handler) http.Handler {
 		h.ServeHTTP(w, r)
 	})
 }
-
 func authorizeRequest(r *http.Request) (string, error) {
 	if os.Getenv("EXPENSER_AUTHNZ_DISABLED") != "" {
 		next.ServeHTTP(w, r)
