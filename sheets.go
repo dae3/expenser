@@ -48,18 +48,26 @@ func init() {
 }
 
 func getNamedRange(rangeName string, ctx context.Context) (*sheets.ValueRange, error) {
-	req := &sheets.BatchGetValuesByDataFilterRequest{
-		DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
-	}
-	resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
-	}
-	if len(resp.ValueRanges) == 0 {
-		return nil, fmt.Errorf("no data found for named range: %s", rangeName)
-	}
+	if os.Getenv("EXPENSER_NO_SHEETS_API") == "" {
+		req := &sheets.BatchGetValuesByDataFilterRequest{
+			DataFilters: []*sheets.DataFilter{{A1Range: rangeName}},
+		}
+		resp, err := svc.Spreadsheets.Values.BatchGetByDataFilter(sheetID, req).Context(ctx).Do()
+		if err != nil {
+			return nil, fmt.Errorf("unable to retrieve data by named range: %v", err)
+		}
+		if len(resp.ValueRanges) == 0 {
+			return nil, fmt.Errorf("no data found for named range: %s", rangeName)
+		}
 
-	return resp.ValueRanges[0].ValueRange, nil
+		return resp.ValueRanges[0].ValueRange, nil
+	} else {
+		dummy := &sheets.ValueRange{}
+		dummy.Values = make([][]interface{}, 1)
+		dummy.Values[0] = make([]interface{}, 1)
+		dummy.Values[0][0] = "dummy"
+		return dummy, nil
+	}
 }
 
 func getStringValuesFromRange(vr *sheets.ValueRange) ([]string, error) {
