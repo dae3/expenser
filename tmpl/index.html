@@ -69,12 +69,18 @@
         </div>
         <div class="row">
           <div id="error" style="color: red" hidden="true" class="row"></div>
+          <label for="email">
+            <input type="checkbox" id="email" value="email">
+            <span class="label-body">Send email notification to G</span
+          </label>
+        </div>
+        <div class="row">
           <button class="button-primary" hx-post="/submit" hx-target="div.container" hx-disabled-elt="this">Submit</button>
         </div>
       </form>
-        {{ range $i, $v := .Favourites }}
-        <button class="button u-full-width" hx-target="body" hx-get="/?fav={{ $i }}">{{ index $v 0 }} {{ index $v 1 }} {{ printf "%.2f" (toFloat (index $v 2)) }}</button>
-        {{ end }}
+      {{ range $i, $v := .Favourites }}
+      <button class="button u-full-width" hx-target="body" hx-get="/?fav={{ $i }}">{{ index $v 0 }} {{ index $v 1 }} {{ printf "%.2f" (toFloat (index $v 2)) }}</button>
+      {{ end }}
       <div class="row">
         <button class="four columns" onclick="qe(event)" id="10">+10</button>
         <button class="four columns" onclick="qe(event)" id="5">+5</button>
