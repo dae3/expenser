@@ -32,3 +32,7 @@ jobs:
           EXPENSER_OIDC_CLIENT_ID=oidc_client_id:2
           EXPENSER_SHEET_ID=sheet_id:1
           /data/users=users:1
+          EXPENSER_MAILJET_API_KEY=mailjet_api_key:1
+          EXPENSER_MAILJET_API_SECRET=mailjet_api_secret:1
+        env_vars: |
+          EXPENSER_EMAIL_TO=gaiannehe@gmail.com

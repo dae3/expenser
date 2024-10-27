@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"text/template"
 	"strings"
+	"text/template"
 )
 
 const (
@@ -161,6 +161,17 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Sheets API error: %v\n", err)
 		} else {
 			log.Println("Saved to Sheets")
+			if r.FormValue("email") == "email" {
+				toEmail := os.Getenv("EXPENSER_EMAIL_TO")
+				if toEmail == "" {
+					log.Println("EXPENSER_EMAIL_TO environment variable is not set. Email not sent.")
+				} else {
+					emailBody := fmt.Sprintf("Daniel's expenses: $%.2f was for %s", d.Amount, d.Category)
+					if err := sendMail(toEmail, "Me", emailBody, emailBody); err != nil {
+						log.Printf("Email sending error: %v\n", err)
+					}
+				}
+			}
 			pages.ExecuteTemplate(w, "submit.html", d)
 		}
 	}
