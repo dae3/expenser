@@ -27,6 +27,7 @@ jobs:
           EXPENSER_OIDC_CALLBACK_URL=https://expenser-pmc7ekho2q-ts.a.run.app/callback
           EXPENSER_USERFILE=/data/users
           EXPENSER_OIDC_IDP_ENDPOINT=https://accounts.google.com
+          EXPENSER_EMAIL_TO=gaiannehe@gmail.com
         secrets: |-
           EXPENSER_API_KEY=api-key:1
           EXPENSER_OIDC_CLIENT_ID=oidc_client_id:2
@@ -34,5 +35,3 @@ jobs:
           /data/users=users:1
           EXPENSER_MAILJET_API_KEY=mailjet_api_key:1
           EXPENSER_MAILJET_API_SECRET=mailjet_api_secret:1
-        env_vars: |
-          EXPENSER_EMAIL_TO=gaiannehe@gmail.com
