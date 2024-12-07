@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
-	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.1
+	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.7
 	golang.org/x/oauth2 v0.24.0
 	google.golang.org/api v0.209.0
 )
@@ -21,7 +21,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.0 // indirect
-	github.com/mailjet/mailjet-apiv3-go/v3 v3.2.0 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
