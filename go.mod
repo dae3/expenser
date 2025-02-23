@@ -4,7 +4,7 @@ go 1.22.2
 toolchain go1.22.12
 
 require (
-	github.com/coreos/go-oidc v2.2.1+incompatible
+	github.com/coreos/go-oidc v2.3.0+incompatible
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.7
 	golang.org/x/oauth2 v0.26.0
 	google.golang.org/api v0.221.0
@@ -34,5 +34,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250207221924-e9438ea467c6 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
-	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 )
