@@ -6,7 +6,7 @@ toolchain go1.23.6
 require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.7
-	golang.org/x/oauth2 v0.26.0
+	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.222.0
 )
 
