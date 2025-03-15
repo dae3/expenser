@@ -1,12 +1,12 @@
 module expense-api
 
 go 1.22.2
-toolchain go1.23.6
+toolchain go1.24.1
 
 require (
 	github.com/coreos/go-oidc v2.3.0+incompatible
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.7
-	golang.org/x/oauth2 v0.27.0
+	golang.org/x/oauth2 v0.28.0
 	google.golang.org/api v0.222.0
 )
 
